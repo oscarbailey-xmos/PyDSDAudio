@@ -5,11 +5,11 @@ Forked from: [linkweaker/python-dsd-tools](https://github.com/lintweaker/python-
 
 Changes from fork:
 
-    - Created a Pip-installable package: Clone this repo, run `pip install ./PyDSDAudio`
-    - Fixed for latest pyalsaaudio
-    - Works with Python 3
-    - `playdsd` is now a cli-command when PyDSDAudio is installed
-        - e.g. usage is as before: `playdsd -c <audiocard> -l <DSD file to play>`
+- Created a Pip-installable package: Clone this repo, run `pip install ./PyDSDAudio`
+- Fixed for latest pyalsaaudio
+- Works with Python 3
+- `playdsd` is now a cli-command when PyDSDAudio is installed
+    - e.g. usage is as before: `playdsd -c <audiocard> -l <DSD file to play>`
 
 > Set of Python scripts for testing and playing DSD files. Mainly created to get
 > some hands on experience with Python.
