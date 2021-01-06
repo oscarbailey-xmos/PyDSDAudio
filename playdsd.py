@@ -32,7 +32,7 @@ import signal
 import alsaaudio
 
 # Load dsdlib
-import dsdlib
+from pydsdaudio import dsdlib
 
 #-- Functions
 def signal_handler(signal, frame):
@@ -176,7 +176,7 @@ def dsfxmos(size, indata, outdata, lsbfirst):
 # playdsdsilence
 # Play DSD silence data
 # Input: dsdfile, nr of ms to play
-def playdsdsilence(myfile, ms):
+def playdsdsilence(out, myfile, ms):
     #print "Requested %d ms of DSD silence playback" % ms
     silsize = ms * myfile.rate // 1000
     #print "Size for silence data = %d" % silsize
@@ -196,202 +196,206 @@ def usage(errstring):
     print("\tplaydsd.py -l\n")
 
 #-- Main
-audiodev = ''
-audiofile = ''
-argv = sys.argv[1:]
+def main():
+    audiodev = ''
+    audiofile = ''
+    argv = sys.argv[1:]
 
-# Check if the python-alsaaudio is updated with DSD sample format support
-if dsdformat() != 0:
-    print("Your python-alsaaudio installation does not support the needed DSD sample format")
-    exit (1)
+    # Check if the python-alsaaudio is updated with DSD sample format support
+    if dsdformat() != 0:
+        print("Your python-alsaaudio installation does not support the needed DSD sample format")
+        exit (1)
 
-try:
-    opts, args = getopt.getopt(argv,"hlc:f:",["card=","file=", "list"])
-    #print "Opts = %s" % opts
-    #print "Args = %s" % args
-    if len(opts) == 0 and len(args) == 0:
-        usage("No arguments given")
+    try:
+        opts, args = getopt.getopt(argv,"hlc:f:",["card=","file=", "list"])
+        #print "Opts = %s" % opts
+        #print "Args = %s" % args
+        if len(opts) == 0 and len(args) == 0:
+            usage("No arguments given")
+            sys.exit(2)
+
+    except getopt.GetoptError:
+        usage("Wrong arguments given")
         sys.exit(2)
-
-except getopt.GetoptError:
-    usage("Wrong arguments given")
-    sys.exit(2)
-for opt, arg in opts:
-    if opt == '-h':
-        usage("")
-        sys.exit(1)
-    elif opt in ("-c", "--card"):
-        audiodev = arg
-    elif opt in ("-f", "--file"):
-        audiofile = arg
-        #print "Arg for file is %s" % arg
-        if arg == "":
-            print("Missing filename for -f option")
+    for opt, arg in opts:
+        if opt == '-h':
+            usage("")
             sys.exit(1)
-    elif opt in ("-l", "--list"):
+        elif opt in ("-c", "--card"):
+            audiodev = arg
+        elif opt in ("-f", "--file"):
+            audiofile = arg
+            #print "Arg for file is %s" % arg
+            if arg == "":
+                print("Missing filename for -f option")
+                sys.exit(1)
+        elif opt in ("-l", "--list"):
+            checksndcards()
+            sys.exit(0)
+
+    if audiodev == "":
+        usage("Missing audio device")
+        sys.exit(1)
+    if audiofile == "":
+        usage("Missing file name")
+        sys.exit(1)
+
+    print("Chosen audio device is: '%s'" % audiodev)
+    print("File to play: '%s'" % audiofile)
+
+    cards = alsaaudio.cards()
+    try:
+        audiodev_index = int(audiodev)
+        audiodev = cards[audiodev_index]
+    except ValueError:
+        # audiodev is already a string
+        audiodev_index = cards.index(audiodev)
+
+    # Check if the chosen card supports native DSD playback
+    res = checkdsd(audiodev)
+    if res == 1:
+        print("\n'%s' is not a (UAC2) USB device" % audiodev)
         checksndcards()
-        sys.exit(0)
+        exit (1)
+    elif res == 2:
+        print("\nAudio card '%s' does not exist." % audiodev)
+        checksndcards()
+        exit (1)
+    elif res == 3:
+        print("\nSorry, '%s' is a USB sound card without native DSD support" % audiodev)
+        checksndcards()
+        exit (1)
+    elif res != 0:
+        print("Res is %d" % res)
+        exit (1)
 
-if audiodev == "":
-    usage("Missing audio device")
-    sys.exit(1)
-if audiofile == "":
-    usage("Missing file name")
-    sys.exit(1)
+    # Install signal handler
+    signal.signal(signal.SIGINT, signal_handler)
 
-print("Chosen audio device is: '%s'" % audiodev)
-print("File to play: '%s'" % audiofile)
+    # Check if given file exists and is readable
 
-cards = alsaaudio.cards()
-try:
-    audiodev_index = int(audiodev)
-    audiodev = cards[audiodev_index]
-except ValueError:
-    # audiodev is already a string
-    audiodev_index = cards.index(audiodev)
+    # Check if file to play is a proper DSDIFF or DSF file.
+    # If so, get its properties
+    myfile = dsdlib.DSDFile()
+    ret = dsdlib.checkdsdfile(audiofile, myfile)
 
-# Check if the chosen card supports native DSD playback
-res = checkdsd(audiodev)
-if res == 1:
-    print("\n'%s' is not a (UAC2) USB device" % audiodev)
-    checksndcards()
-    exit (1)
-elif res == 2:
-    print("\nAudio card '%s' does not exist." % audiodev)
-    checksndcards()
-    exit (1)
-elif res == 3:
-    print("\nSorry, '%s' is a USB sound card without native DSD support" % audiodev)
-    checksndcards()
-    exit (1)
-elif res != 0:
-    print("Res is %d" % res)
-    exit (1)
+    #print "Got: myfile.valid = %d, myfile.type = %s" % (myfile.valid, myfile.type)
 
-# Install signal handler
-signal.signal(signal.SIGINT, signal_handler)
+    if myfile.valid == 2:
+        print(myfile)
+        print("Not a DSD file")
+        sys.exit(1)
 
-# Check if given file exists and is readable
+    dsdtype = myfile.type
+    valid = myfile.valid
+    rate = myfile.rate
+    channels = myfile.channels
 
-# Check if file to play is a proper DSDIFF or DSF file.
-# If so, get its properties
-myfile = dsdlib.DSDFile()
-ret = dsdlib.checkdsdfile(audiofile, myfile)
+    if valid == 0 and (dsdtype != 'dsdiff' and dsdtype != 'dsf'):
+        print("Unsupported or invalid DSD file")
+        sys.exit(1)
 
-#print "Got: myfile.valid = %d, myfile.type = %s" % (myfile.valid, myfile.type)
+    if valid == 0 and (dsdtype == 'dsdiff' or dsdtype == 'dsf'):
+        print("Invalid %s file" % dsdtype.upper())
+        sys.exit(1)
 
-if myfile.valid == 2:
-    print(myfile)
-    print("Not a DSD file")
-    sys.exit(1)
+    if dsdtype == "dsdiff" and myfile.compress == 1:
+        print("This DSDIFF file uses compressed DSD data samples, playback is not supported")
+        sys.exit(1)
 
-dsdtype = myfile.type
-valid = myfile.valid
-rate = myfile.rate
-channels = myfile.channels
+    if channels != 2:
+        print("Sorry, only 2 channel (stereo) files are supported")
+        sys.exit(1)
 
-if valid == 0 and (dsdtype != 'dsdiff' and dsdtype != 'dsf'):
-    print("Unsupported or invalid DSD file")
-    sys.exit(1)
+    print("DSD file type: %s" % dsdtype.upper())
+    print("channels = %d" % channels)
+    print("rate = %d Hz [%s]" % (rate, dsdlib.rate_to_string(rate)))
+    print("Total file size: %d" % myfile.fsize)
+    print("DSD data start at: %d" % myfile.datastart)
+    print("DSD data size: %d" % myfile.datasize)
 
-if valid == 0 and (dsdtype == 'dsdiff' or dsdtype == 'dsf'):
-    print("Invalid %s file" % dsdtype.upper())
-    sys.exit(1)
+    # Open file
+    f = open(audiofile, 'rb')
+    # Seek to start of DSD data
+    f.seek(myfile.datastart)
 
-if dsdtype == "dsdiff" and myfile.compress == 1:
-    print("This DSDIFF file uses compressed DSD data samples, playback is not supported")
-    sys.exit(1)
-
-if channels != 2:
-    print("Sorry, only 2 channel (stereo) files are supported")
-    sys.exit(1)
-
-print("DSD file type: %s" % dsdtype.upper())
-print("channels = %d" % channels)
-print("rate = %d Hz [%s]" % (rate, dsdlib.rate_to_string(rate)))
-print("Total file size: %d" % myfile.fsize)
-print("DSD data start at: %d" % myfile.datastart)
-print("DSD data size: %d" % myfile.datasize)
-
-# Open file
-f = open(audiofile, 'rb')
-# Seek to start of DSD data
-f.seek(myfile.datastart)
-
-# Setup ALSA
-try:
-    out = alsaaudio.PCM(
-        alsaaudio.PCM_PLAYBACK,
-        channels=2,
-        rate=myfile.rate//8//4,
-        format=alsaaudio.PCM_FORMAT_DSD_U32_BE,
-        periodsize=11025,
-        cardindex=audiodev_index
-    )
-except Exception as e:
-    print("\nError: Cannot play, %s\n" % e)
-    sys.exit(1)
+    # Setup ALSA
+    try:
+        out = alsaaudio.PCM(
+            alsaaudio.PCM_PLAYBACK,
+            channels=2,
+            rate=myfile.rate//8//4,
+            format=alsaaudio.PCM_FORMAT_DSD_U32_BE,
+            periodsize=11025,
+            cardindex=audiodev_index
+        )
+    except Exception as e:
+        print("\nError: Cannot play, %s\n" % e)
+        sys.exit(1)
 
 
-# Start with a few ms of DSD silence data
-playdsdsilence(myfile, 10)
+    # Start with a few ms of DSD silence data
+    playdsdsilence(out, myfile, 10)
 
-if myfile.type == "dsdiff":
-    # DSDIFF playback	
+    if myfile.type == "dsdiff":
+        # DSDIFF playback	
 
-    # Play!
-    print("Playing '%s' using card '%s'" % (audiofile, audiodev))
-    rdsize=320
-
-    data = f.read(rdsize)
-    newdata = bytearray(rdsize)
-
-    # Convert first block of DSD data
-    newdata = dsdxmos(rdsize, data, newdata)
-    datasize = myfile.datasize - rdsize
-    remain = datasize
-
-    while data:
-        out.write(newdata)
-
-        remain -= rdsize	
-        if remain < rdsize:
-            print("Nearing the end, todo: %d" % remain)
-            rdsize = remain
+        # Play!
+        print("Playing '%s' using card '%s'" % (audiofile, audiodev))
+        rdsize=320
 
         data = f.read(rdsize)
         newdata = bytearray(rdsize)
 
+        # Convert first block of DSD data
         newdata = dsdxmos(rdsize, data, newdata)
+        datasize = myfile.datasize - rdsize
+        remain = datasize
 
-# DSF playback
-else:
-    rdsize = 8192
-    data = f.read(rdsize)
-    data = bytearray(data)
-    newdata = bytearray(data)
+        while data:
+            out.write(newdata)
 
-    # Convert first block of DSD data
-    newdata = dsfxmos(rdsize, data, newdata, myfile.lsbfirst)
-    datasize = myfile.datasize - rdsize
-    remain = datasize
+            remain -= rdsize	
+            if remain < rdsize:
+                print("Nearing the end, todo: %d" % remain)
+                rdsize = remain
 
-    while data:
-        out.write(newdata)
-        remain -= rdsize
+            data = f.read(rdsize)
+            newdata = bytearray(rdsize)
 
-        if remain < rdsize:
-            print("DSF: nearing the end, todo: %d" % remain)
-            rdsize = remain
+            newdata = dsdxmos(rdsize, data, newdata)
+
+    # DSF playback
+    else:
+        rdsize = 8192
         data = f.read(rdsize)
         data = bytearray(data)
-        newdata = bytearray(rdsize)
+        newdata = bytearray(data)
 
+        # Convert first block of DSD data
         newdata = dsfxmos(rdsize, data, newdata, myfile.lsbfirst)
+        datasize = myfile.datasize - rdsize
+        remain = datasize
+
+        while data:
+            out.write(newdata)
+            remain -= rdsize
+
+            if remain < rdsize:
+                print("DSF: nearing the end, todo: %d" % remain)
+                rdsize = remain
+            data = f.read(rdsize)
+            data = bytearray(data)
+            newdata = bytearray(rdsize)
+
+            newdata = dsfxmos(rdsize, data, newdata, myfile.lsbfirst)
 
 
-# Play a few ms of DSD silence at the end
-playdsdsilence(myfile, 10)
+    # Play a few ms of DSD silence at the end
+    playdsdsilence(out, myfile, 10)
 
-f.close()
-sys.exit(0)
+    f.close()
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
