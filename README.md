@@ -1,5 +1,7 @@
-python-dsd-tools
-================
+PyDSDAudio
+==========
+
+Forked from: [linkweaker/python-dsd-tools](https://github.com/lintweaker/python-dsd-tools)
 
 Set of Python scripts for testing and playing DSD files. Mainly created to get
 some hands on experience with Python.
