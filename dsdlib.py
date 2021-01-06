@@ -86,7 +86,7 @@ for x in dsf_data:
 # dsdfile.curpos	-
 
 @dataclass
-class dsdfile:
+class DSDFile:
     type: str = ""
     valid: int = 0
     condedence: int = 0
@@ -100,24 +100,6 @@ class dsdfile:
     id3len: int = 0
     lsbfirst: int = 0
     curpos: int = 0
-
-#class dsdfile(Structure):
-#	_fields_ = [
-#			('type', 6*c_char),
-#			('valid', c_byte),
-#			('confedence', c_ushort),
-#			('version', c_ulong),
-#			('compress', c_bool),
-#			('channels', c_byte),
-#			('rate', c_ulong),
-#			('fsize', c_longlong),
-#			('datasize', c_longlong),
-#			('datastart', c_longlong),
-#			('id3tag', c_longlong),
-#			('id3len', c_longlong),
-#			('lsbfirst', c_ushort,),
-#			('curpos', c_longlong)
-#		]
 
 #-- Functions
 def wrongfile(marker):

@@ -275,7 +275,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 # Check if file to play is a proper DSDIFF or DSF file.
 # If so, get its properties
-myfile = dsdlib.dsdfile()
+myfile = dsdlib.DSDFile()
 ret = dsdlib.checkdsdfile(audiofile, myfile)
 
 #print "Got: myfile.valid = %d, myfile.type = %s" % (myfile.valid, myfile.type)
