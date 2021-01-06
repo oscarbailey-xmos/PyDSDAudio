@@ -50,7 +50,7 @@ dsd_rate_to_text = {
 
 #-- Functions
 def wrongfile(marker):
-    print "Not a DSF file! Error at '%s' marker" % marker
+    print("Not a DSF file! Error at '%s' marker" % marker)
     sys.exit(1)
 
 # Convert given rate to DSD64, DSD128 etc moniker
@@ -65,12 +65,12 @@ def dsdtype(rate):
 
 # Check command line arguments
 if len(sys.argv) <= 1:
-    print "Missing filename to test on"
+    print("Missing filename to test on")
     sys.exit(1)
 
 filename = sys.argv[1]
 
-print "\nResults for file\t\t: %s\n" % filename
+print("\nResults for file\t\t: %s\n" % filename)
 
 results = []
 
@@ -85,22 +85,22 @@ with open(filename, "rb") as f:
     if chunk_id != 'DSD ':
         wrongfile('DSD ')
 
-    print "DSF 'DSD ' chunk info:\n"
+    print("DSF 'DSD ' chunk info:\n")
 
     chunk_size = results[0][1]        # Size should be 28
     if chunk_size != 28:
-        print "Wrong chunk size: %d" % chunk_size
+        print("Wrong chunk size: %d" % chunk_size)
         sys.exit(1)
 
 
     file_size = results[0][2]
-    print "Total file size\t\t\t: %d" % file_size
+    print("Total file size\t\t\t: %d" % file_size)
 
     id3_chunk_offset = results[0][3]
     if id3_chunk_offset == 0:
-        print "ID3v2 chunk offset\t\t: No ID3v2 tag"
+        print("ID3v2 chunk offset\t\t: No ID3v2 tag")
     else:
-        print "ID3v2 chunk offset\t\t: %d" % id3_chunk_offset
+        print("ID3v2 chunk offset\t\t: %d" % id3_chunk_offset)
 
     # Read the fmt chunk
     results = []
@@ -112,29 +112,29 @@ with open(filename, "rb") as f:
     if chunk_id != 'fmt ':
         wrongfile('fmt ')
 
-    print "\nDSF 'fmt ' chunk info:\n"
+    print("\nDSF 'fmt ' chunk info:\n")
 
     chunk_size = results[0][1]        # Size should be 52
     if chunk_size != 52:
-        print "Wrong chunk size: %d" % chunk_size
+        print("Wrong chunk size: %d" % chunk_size)
         sys.exit(1)
 
     dsf_version = results[0][2]        # Should be 1
     if dsf_version != 1:
-        print "DSF version\t\t\t: %d [Unknown version]" % dsf_version
-        print "-- the results might not be correct --"
+        print("DSF version\t\t\t: %d [Unknown version]" % dsf_version)
+        print("-- the results might not be correct --")
     else:
-        print "DSF version\t\t\t: %d" % dsf_version
+        print("DSF version\t\t\t: %d" % dsf_version)
 
     dsf_format_id = results[0][3]        # Should be 0
     if dsf_format_id != 0:
-        print "Format ID\t\t\t: %d [Unsupported]" % dsf_format_id
+        print("Format ID\t\t\t: %d [Unsupported]" % dsf_format_id)
     else:
-        print "Format ID\t\t\t: %d [DSD raw]" % dsf_format_id
+        print("Format ID\t\t\t: %d [DSD raw]" % dsf_format_id)
 
     dsf_chan_type = results[0][4]
     if dsf_chan_type == 0 or dsf_chan_type > 7:
-        print "Channel type\t\t\t: %d [Unsupported]" % dsf_chan_type
+        print("Channel type\t\t\t: %d [Unsupported]" % dsf_chan_type)
     else:
         if dsf_chan_type == 1:
             spkr_setup = "Mono"
@@ -151,36 +151,36 @@ with open(filename, "rb") as f:
         if dsf_chan_type == 7:
             spkr_setup == "5.1 channels"
 
-        print "Channel type\t\t\t: %d [%s]" % (dsf_chan_type, spkr_setup)
+        print("Channel type\t\t\t: %d [%s]" % (dsf_chan_type, spkr_setup))
 
     dsf_chan_num = results[0][5]
     if dsf_chan_num == 0 or dsf_chan_num > 7:
-        print "Number of channels\t\t: %d [Unsupported]" % dsf_chan_num
+        print("Number of channels\t\t: %d [Unsupported]" % dsf_chan_num)
     else:
-        print "Number of channels\t\t: %d" % dsf_chan_num
+        print("Number of channels\t\t: %d" % dsf_chan_num)
 
     dsf_rate = results[0][6]
     dsdstr = dsdtype(dsf_rate)
-    print "Sampling frequency\t\t: %d Hz [%s]" % (dsf_rate, dsdstr)
+    print("Sampling frequency\t\t: %d Hz [%s]" % (dsf_rate, dsdstr))
 
     dsf_sample_bits = results[0][7]
     if dsf_sample_bits == 8:
-        print "Bits per sample\t\t\t: %d [MSB first]" % dsf_sample_bits
+        print("Bits per sample\t\t\t: %d [MSB first]" % dsf_sample_bits)
     else:
-        print "Bits per sample\t\t\t: %d [LSB first, bit reverse needed]" % dsf_sample_bits
+        print("Bits per sample\t\t\t: %d [LSB first, bit reverse needed]" % dsf_sample_bits)
 
     dsf_sample_count = results[0][8]
-    print "1-bit sample count (per channel): %d" % dsf_sample_count
+    print("1-bit sample count (per channel): %d" % dsf_sample_count)
 
     dsf_block_size = results[0][9]
     if dsf_block_size == 4096:
-        print "Block size per channel\t\t: %d" % dsf_block_size
+        print("Block size per channel\t\t: %d" % dsf_block_size)
     else:
-        print "Block size per channel\t\t: %d [Unsupported]" % dsf_block_size
+        print("Block size per channel\t\t: %d [Unsupported]" % dsf_block_size)
 
     dsf_reserved = results[0][10]
     if dsf_reserved != 0:
-        print "Reserved\t\t\t: %d [Should be 0]" % dsf_reserved
+        print("Reserved\t\t\t: %d [Should be 0]" % dsf_reserved)
 
     # Read chunk header of 'data' chunk
     results = []
@@ -192,15 +192,15 @@ with open(filename, "rb") as f:
     if chunk_id != 'data':
         wrongfile('data')
 
-    print "\nDSF 'data' chunk info:\n"
+    print("\nDSF 'data' chunk info:\n")
 
-    print "Sample data starts at\t\t: %d" % f.tell()
+    print("Sample data starts at\t\t: %d" % f.tell())
     chunk_size = results[0][1]
     chunk_size -= 12
-    print "Chunk size (samples)\t\t: %d" % chunk_size
+    print("Chunk size (samples)\t\t: %d" % chunk_size)
 
     if chunk_size != dsf_chan_num * dsf_sample_count:
-        print "Number of fill samples\t\t: %d [calculated]" % (chunk_size - (dsf_chan_num * dsf_sample_count / 8))
+        print("Number of fill samples\t\t: %d [calculated]" % (chunk_size - (dsf_chan_num * dsf_sample_count / 8)))
 
     # Read metadata chunk
     if id3_chunk_offset != 0:
@@ -211,15 +211,15 @@ with open(filename, "rb") as f:
     s = struct_unpack_meta_chunk(data)
     results.append(s)
 
-    print "\nDSF 'metadata' chunk info:\n"
+    print("\nDSF 'metadata' chunk info:\n")
 
     chunk_id = results[0][0]
     if chunk_id == 'ID3':
-        print "ID3 tag\t\t\t\t: OK (%s)" % chunk_id
+        print("ID3 tag\t\t\t\t: OK (%s)" % chunk_id)
     else:
-        print "No valid ID3 tag at offset %d" % id3_chunk_offset
+        print("No valid ID3 tag at offset %d" % id3_chunk_offset)
 
-    print "\nDone"
+    print("\nDone")
 
     f.close()
 

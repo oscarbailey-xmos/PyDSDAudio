@@ -25,7 +25,7 @@
 # - Use dictionary for rate to text concversion
 
 
-from __future__ import print_function
+
 
 import struct
 import sys
