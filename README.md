@@ -10,6 +10,9 @@ Changes from fork:
 - Works with Python 3
 - `playdsd` is now a cli-command when PyDSDAudio is installed
     - e.g. usage is as before: `playdsd -c <audiocard> -l <DSD file to play>`
+- New command `dsf2raw` converts a Stereo DSF file to .raw format for playing using `aplay` e.g.:
+    - `dsf2raw input.dsf output.raw`
+    - `aplay -f DSD_U32_BE output.raw -c 2 -r 88200 -D hw:1,0` (Rate is DSD64, 2822400 / 8 bits per channel / 4 bytes per frame)
 
 > Set of Python scripts for testing and playing DSD files. Mainly created to get
 > some hands on experience with Python.
