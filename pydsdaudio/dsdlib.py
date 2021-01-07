@@ -585,7 +585,7 @@ def check_dsf(filename, dsdfile):
         chunk_size -= 12
         #print "Chunk size (samples)\t\t: %d" % chunk_size
 
-        playable_size = dsf_chan_num * dsf_sample_count / 8
+        playable_size = dsf_chan_num * dsf_sample_count // 8
 
         if chunk_size > playable_size:
             dsdfile.datasize = playable_size

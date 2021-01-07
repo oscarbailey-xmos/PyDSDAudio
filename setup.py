@@ -16,13 +16,13 @@ NAME = 'PyDSDAudio'
 DESCRIPTION = 'Python package for playing DSD files'
 URL = 'https://github.com/oscarbailey-xmos/PyDSDAudio'
 EMAIL = 'oscarbailey@xmos.com'
-AUTHOR = 'XMOS'
+AUTHOR = 'Oscar Bailey'
 REQUIRES_PYTHON = '>=3.7.0'
 VERSION = '0.1.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'pyalsaaudio'
+    'pyalsaaudio', 'tqdm'
 ]
 
 # What packages are optional?
@@ -108,7 +108,7 @@ setup(
     # py_modules=['mypackage'],
 
     entry_points={
-        'console_scripts': ['playdsd=pydsdaudio.playdsd:main'],
+        'console_scripts': ['playdsd=pydsdaudio.playdsd:main', 'dsf2raw=pydsdaudio.dsf2raw:main'],
     },
     install_requires=REQUIRED,
     extras_require=EXTRAS,

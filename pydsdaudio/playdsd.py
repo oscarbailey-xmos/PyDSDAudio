@@ -378,6 +378,7 @@ def main():
         remain = datasize
 
         while data:
+            # The out.write call blocks until there is room in the ALSA buffer
             out.write(newdata)
             remain -= rdsize
 
